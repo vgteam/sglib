@@ -1131,6 +1131,22 @@ std::vector<handle_t> ODGI::divide_handle(const handle_t& handle, const std::vec
     for (auto& s : seqs) {
         handles.push_back(create_handle(s));
     }
+
+    // update the backwards references back onto this node
+    handle_t last_handle = handles.back();
+    follow_edges(fwd_handle, false, [&](const handle_t& h) {
+            if (h == flip(fwd_handle)) {
+                // destroy_edge(last_handle, h);
+                create_edge(last_handle, flip(handles.back()));
+            }
+    });
+    // update the forward references back onto this node
+    follow_edges(handle, left, [&](const handle_t& h) {
+        if (h == flip(handle)) {
+            create_edge(h, handles.front());
+        }
+    });
+
     // and record their reverse, for use in path fixup
     std::vector<handle_t> rev_handles;
     for (auto& h : handles) {

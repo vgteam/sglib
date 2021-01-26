@@ -1378,8 +1378,8 @@ void test_deletable_handle_graphs() {
         PackedGraph pg;
         implementations.push_back(&pg);
         
-        //ODGI og;
-        //implementations.push_back(&og);
+        ODGI og;
+        implementations.push_back(&og);
         
         for (DeletableHandleGraph* implementation : implementations) {
             DeletableHandleGraph& graph = *implementation;
