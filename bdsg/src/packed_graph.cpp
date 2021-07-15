@@ -85,57 +85,13 @@ namespace bdsg {
     }
     
     void MappedPackedGraph::serialize_members(std::ostream& out) const {
-        // TODO: libhandlegraph already wrote our magic number, but the UniqueMappedPointer emits the prefix in the data.
-        // Right now we just cut it out.
-        size_t dropped = 0;
-        
-        std::string prefix = get_prefix();
-        
-        implementation.save([&](const void* start, size_t length) {
-            const char* start_char = (const char*) start;
-            while (dropped < prefix.size() && length > 0) {
-                // Drop all the characters we get from the prefix
-                start_char++;
-                dropped++;
-                length--;
-            }
-            
-            // Write the rest, if any
-            out.write(start_char, length);
-        });
+        // libhandlegraph already wrote our magic number prefix.
+        implementation.save_after_prefix(out, get_prefix());
     }
     
     void MappedPackedGraph::deserialize_members(std::istream& in) {
-        // TODO: libhandlegraph stole our magic number, but the UniqueMappedPointer needs the prefix in the data.
-        // Right now we just fake it again.
-        
-        bool is_first_run = true;
-        
-        // How many bytes should we buffer at a time?
-        const size_t MAX_CHUNK_SIZE = 4096;
-    
-        // Fill up this buffer with chunks of a certian size
-        std::string buffer;
-    
-        implementation.load([&]() {
-            if (is_first_run) {
-                // Fake the prefix
-                is_first_run = false;
-                return get_prefix();
-            }
-            
-            // Otherwise use the buffer
-            buffer.resize(MAX_CHUNK_SIZE);
-            // Grab a chunk
-            in.read(&buffer.at(0), MAX_CHUNK_SIZE);
-            if (!in) {
-                // Didn't read all the characters, so shrink down (maybe to 0)
-                buffer.resize(in.gcount());
-            }
-            // Copy the buffer over to the caller.
-            // TODO: can we save a copy here?
-            return buffer;
-        }, get_prefix());
+        // libhandlegraph stole our magic number, and checked it.
+        implementation.load_after_prefix(in, get_prefix());
     }
     
     uint32_t MappedPackedGraph::get_magic_number() const {
